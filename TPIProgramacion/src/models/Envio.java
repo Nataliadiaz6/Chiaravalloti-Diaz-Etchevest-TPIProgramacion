@@ -68,8 +68,6 @@ public class Envio extends Base {
         super();
     }
 
-    // --- Getters y Setters ---
-
     public String getTracking() {
         return tracking;
     }
