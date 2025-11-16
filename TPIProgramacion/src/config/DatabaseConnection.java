@@ -21,13 +21,13 @@ import java.sql.SQLException;
 public final class DatabaseConnection {
     /** URL de conexión JDBC. */
     // Mantengo tpi como nombre de la BD de ejemplo
-    private static final String URL = "jdbc:mysql://localhost:3307/tpiprogramacion";
+    private static final String URL = "jdbc:mysql://localhost:3306/tpi";
     
     /** Usuario de la base de datos. */
     private static final String USER = "root";
 
     /** Contraseña del usuario.*/
-   private static final String PASSWORD = "030991Nd-";
+   private static final String PASSWORD = "";
 
     /**
      * Bloque de inicialización estática.
