@@ -29,7 +29,7 @@ import java.util.List;
 public class EnvioDAO implements GenericDAO<Envio> {
     
     // Nombres de tablas y campos específicos del dominio Envío
-    private static final String TABLE = "envios";
+    private static final String TABLE = "envio";
 
     /** Query de inserción. Inserta todos los campos de Envío. */
     private static final String INSERT_SQL = "INSERT INTO " + TABLE + 

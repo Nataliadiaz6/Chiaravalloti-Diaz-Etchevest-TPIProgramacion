@@ -27,32 +27,36 @@ import java.util.List;
  */
 public class PedidoDAO implements GenericDAO<Pedido> {
 
-    private static final String TABLE_A = "pedidos";
-    private static final String TABLE_B = "envios";
+    private static final String TABLE_A = "pedido";
+    private static final String TABLE_B = "envio";
     
     // El campo de la FK en la tabla B (envios) que apunta a A (pedidos)
+    // ESTA CONSTANTE ES MERAMENTE INFORMATIVA, NO ES USADA EN LAS QUERIES.
     private static final String FK_FIELD = "pedido_id"; 
 
     /** Query de inserción de Pedido. Inserta numero, fecha, clienteNombre, total, estado, y la FK del Envío. */
+    // La columna en la BD se llama envioId, pero la usaremos en el mapeo como envioId
     private static final String INSERT_SQL = "INSERT INTO " + TABLE_A + 
-            " (numero, fecha, clienteNombre, total, estado, envio_id) VALUES (?, ?, ?, ?, ?, ?)";
+            " (numero, fecha, clienteNombre, total, estado, envioId) VALUES (?, ?, ?, ?, ?, ?)"; // <-- CORREGIDO A envioId
 
     /** Query de actualización de Pedido. Actualiza todos los campos, incluida la FK del Envío. */
     private static final String UPDATE_SQL = "UPDATE " + TABLE_A + 
-            " SET numero = ?, fecha = ?, clienteNombre = ?, total = ?, estado = ?, envio_id = ? WHERE id = ?";
+            " SET numero = ?, fecha = ?, clienteNombre = ?, total = ?, estado = ?, envioId = ? WHERE id = ?"; // <-- CORREGIDO A envioId
 
     /** Query de soft delete. Marca eliminado=TRUE en Pedido. */
     private static final String DELETE_SQL = "UPDATE " + TABLE_A + " SET eliminado = TRUE WHERE id = ?";
 
     /** * Query base para SELECTs (ByID y All).
      * LEFT JOIN es crucial para cargar el Envío (Clase B) asociado.
-     * Nota: La FK que une es (pedidos.envio_id = envios.id).
+     * Nota: La FK que une es (pedidos.envioId = envios.id).
      */
     private static final String SELECT_BASE_FIELDS = 
-            "p.id, p.eliminado, p.numero, p.fecha, p.clienteNombre, p.total, p.estado, p.envio_id, " +
+            // CORREGIDO: SE USA envioId en lugar de envio_id
+            "p.id, p.eliminado, p.numero, p.fecha, p.clienteNombre, p.total, p.estado, p.envioId, " + 
             "e.id AS envio_id_fk, e.eliminado AS e_eliminado, e.tracking, e.empresa, e.tipo, e.costo, e.fechaDespacho, e.fechaEstimada, e.estado AS e_estado ";
     
-    private static final String LEFT_JOIN = " FROM " + TABLE_A + " p LEFT JOIN " + TABLE_B + " e ON p.envio_id = e.id ";
+    // CORREGIDO: SE USA envioId en lugar de envio_id en el JOIN
+    private static final String LEFT_JOIN = " FROM " + TABLE_A + " p LEFT JOIN " + TABLE_B + " e ON p.envioId = e.id ";
 
     private static final String SELECT_BY_ID_SQL = "SELECT " + SELECT_BASE_FIELDS + LEFT_JOIN + 
             " WHERE p.id = ? AND p.eliminado = FALSE";
@@ -197,7 +201,7 @@ public class PedidoDAO implements GenericDAO<Pedido> {
 
     /**
      * Setea los parámetros del Pedido en un PreparedStatement para INSERT/UPDATE.
-     * Incluye el manejo de la FK 'envio_id'.
+     * Incluye el manejo de la FK 'envioId'.
      */
     private void setPedidoParameters(PreparedStatement stmt, Pedido pedido) throws SQLException {
         stmt.setString(1, pedido.getNumero());
@@ -209,7 +213,7 @@ public class PedidoDAO implements GenericDAO<Pedido> {
     }
 
     /**
-     * Setea la FK 'envio_id' en un PreparedStatement.
+     * Setea la FK 'envioId' en un PreparedStatement.
      * Maneja correctamente el caso NULL (Pedido sin Envío).
      */
     private void setEnvioId(PreparedStatement stmt, int parameterIndex, Envio envio) throws SQLException {
@@ -254,7 +258,7 @@ public class PedidoDAO implements GenericDAO<Pedido> {
         pedido.setEstado(EstadoPedido.valueOf(rs.getString("estado")));
 
         // Manejo de LEFT JOIN: verificar si el envío_id es NULL (Pedido sin Envío)
-        Long envioIdFK = rs.getLong("envio_id");
+        Long envioIdFK = rs.getLong("envioId"); // <-- CORREGIDO AQUÍ ANTERIORMENTE
         if (!rs.wasNull() && envioIdFK != null && envioIdFK > 0) {
             // Mapeo de la Clase B (Envio)
             Envio envio = new Envio();
