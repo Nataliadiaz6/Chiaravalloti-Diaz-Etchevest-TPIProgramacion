@@ -1,8 +1,8 @@
-CREATE DATABASE IF NOT EXISTS tpiprogramacion
+CREATE DATABASE IF NOT EXISTS tpi
   CHARACTER SET utf8mb4
   COLLATE utf8mb4_unicode_ci;
 
-USE tpiprogramacion;
+USE tpi;
 
 CREATE TABLE IF NOT EXISTS envio (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
