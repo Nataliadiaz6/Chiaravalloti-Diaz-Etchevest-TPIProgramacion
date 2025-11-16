@@ -1,4 +1,4 @@
-USE tpiprogramacion;
+USE tpi;
 
 INSERT INTO envio (eliminado, tracking, empresa, tipo, costo,
                    fechaDespacho, fechaEstimada, estado)
