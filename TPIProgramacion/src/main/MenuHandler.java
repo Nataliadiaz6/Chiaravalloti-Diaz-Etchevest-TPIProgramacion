@@ -9,7 +9,6 @@ package main;
  * @author Jorgelina
  */
 
-
 import java.time.LocalDate;
 import java.util.List;
 
@@ -39,19 +38,117 @@ public class MenuHandler {
     }
 
     // ============================================================
-    // 1) CREAR PEDIDO SIMPLE
+    // VALIDADORES GENERALES
+    // ============================================================
+
+    private String leerStringObligatorio(String prompt) {
+        while (true) {
+            String s = display.leerString(prompt);
+            if (s != null && !s.trim().isEmpty()) return s;
+            display.mostrarMensaje("El valor no puede estar vacio.");
+        }
+    }
+
+    private String leerStringOpcional(String prompt) {
+        while (true) {
+            String s = display.leerString(prompt);
+            if (s.trim().isEmpty()) return ""; 
+            return s;
+        }
+    }
+
+    private Double leerDoublePositivo(String prompt) {
+        while (true) {
+            Double d = display.leerDouble(prompt);
+            if (d != null && d > 0) return d;
+            display.mostrarMensaje("Debe ingresar un numero valido mayor a 0.");
+        }
+    }
+
+    private Double leerDoubleOpcional(String prompt) {
+        while (true) {
+            String input = display.leerString(prompt);
+            if (input.trim().isEmpty()) return null;
+            try {
+                return Double.parseDouble(input);
+            } catch (Exception e) {
+                display.mostrarMensaje("Numero invalido.");
+            }
+        }
+    }
+
+    private Long leerLongObligatorio(String prompt) {
+        while (true) {
+            Long l = display.leerLong(prompt);
+            if (l != null) return l;
+            display.mostrarMensaje("Debe ingresar un numero valido.");
+        }
+    }
+
+    private LocalDate leerFechaObligatoria(String prompt) {
+        while (true) {
+            LocalDate f = display.leerFecha(prompt);
+            if (f != null) return f;
+            display.mostrarMensaje("Debe ingresar una fecha valida.");
+        }
+    }
+
+    // ============================================================
+    // MENÚ NUMÉRICO PARA ENUMS
+    // ============================================================
+
+    private <T extends Enum<T>> T seleccionarEnum(Class<T> enumClass, String prompt) {
+        T[] valores = enumClass.getEnumConstants();
+
+        display.mostrarMensaje(prompt);
+        for (int i = 0; i < valores.length; i++) {
+            System.out.println((i + 1) + ") " + valores[i]);
+        }
+
+        while (true) {
+            Long opcion = leerLongObligatorio("Elija opcion: ");
+
+            if (opcion >= 1 && opcion <= valores.length) {
+                return valores[opcion.intValue() - 1];
+            }
+
+            display.mostrarMensaje("Opcion invalida.");
+        }
+    }
+
+    // Versión opcional (permite Enter)
+    private <T extends Enum<T>> T seleccionarEnumOpcional(Class<T> enumClass, String prompt) {
+        T[] valores = enumClass.getEnumConstants();
+
+        display.mostrarMensaje(prompt + " (Enter para omitir)");
+        for (int i = 0; i < valores.length; i++) {
+            System.out.println((i + 1) + ") " + valores[i]);
+        }
+
+        while (true) {
+            String input = display.leerString("Opcion: ");
+            if (input.trim().isEmpty()) return null;
+
+            try {
+                int idx = Integer.parseInt(input);
+                if (idx >= 1 && idx <= valores.length) {
+                    return valores[idx - 1];
+                }
+            } catch (Exception e) {
+                display.mostrarMensaje("Ingrese un numero o Enter para omitir.");
+            }
+        }
+    }
+
+    // ============================================================
+    // 1) CREAR PEDIDO
     // ============================================================
     public void crearPedidoSimple() {
 
-        String numero = display.leerString("Numero: ");
-        LocalDate fecha = display.leerFecha("Fecha (yyyy-MM-dd): ");
-        String cliente = display.leerString("Cliente: ");
-        Double total = display.leerDouble("Total: ");
-
-        if (fecha == null || total == null) {
-            display.mostrarMensaje("Datos invalidos.");
-            return;
-        }
+        String numero = leerStringObligatorio("Numero: ");
+        LocalDate fecha = leerFechaObligatoria("Fecha (yyyy-MM-dd): ");
+        String cliente = leerStringObligatorio("Cliente: ");
+        Double total = leerDoublePositivo("Total: ");
 
         Pedido p = new Pedido(null, false, numero, fecha, cliente, total, EstadoPedido.NUEVO, null);
 
@@ -63,14 +160,12 @@ public class MenuHandler {
         }
     }
 
-
     // ============================================================
-    // 2) CREAR ENVÍO PARA UN PEDIDO EXISTENTE
+    // 2) CREAR ENVÍO PARA PEDIDO
     // ============================================================
     public void crearEnvioParaPedido() {
 
-        Long id = display.leerLong("ID del pedido: ");
-        if (id == null) return;
+        Long id = leerLongObligatorio("ID del pedido: ");
 
         Pedido p;
         try {
@@ -86,43 +181,32 @@ public class MenuHandler {
         }
 
         Envio envio = leerEnvio();
-        if (envio == null) return;
 
         try {
             envioService.insertar(envio);
             p.setEnvio(envio);
             pedidoService.actualizar(p);
-            display.mostrarMensaje("Envío creado y asociado.");
+            display.mostrarMensaje("Envio creado y asociado.");
         } catch (Exception e) {
             display.mostrarMensaje("Error: " + e.getMessage());
         }
     }
 
-
     // ============================================================
-    // 3) CREAR PEDIDO + ENVÍO (TRANSACCIÓN REAL)
+    // 3) CREAR PEDIDO + ENVÍO
     // ============================================================
     public void crearPedidoConEnvio() {
 
-        String numero = display.leerString("Numero: ");
-        LocalDate fecha = display.leerFecha("Fecha (yyyy-MM-dd): ");
-        String cliente = display.leerString("Cliente: ");
-        Double total = display.leerDouble("Total: ");
-
-        if (fecha == null || total == null) {
-            display.mostrarMensaje("Datos invalidos.");
-            return;
-        }
+        String numero = leerStringObligatorio("Numero: ");
+        LocalDate fecha = leerFechaObligatoria("Fecha (yyyy-MM-dd): ");
+        String cliente = leerStringObligatorio("Cliente: ");
+        Double total = leerDoublePositivo("Total: ");
 
         boolean quiereEnvio = display.confirmar("¿Crear tambien el envio?");
         Envio envio = null;
 
         if (quiereEnvio) {
             envio = leerEnvio();
-            if (envio == null) {
-                display.mostrarMensaje("Envio invalido. Operacion cancelada.");
-                return;
-            }
         }
 
         Pedido p = new Pedido(null, false, numero, fecha, cliente, total, EstadoPedido.NUEVO, envio);
@@ -131,12 +215,10 @@ public class MenuHandler {
             pedidoService.insertar(p);
             display.mostrarMensaje("Pedido creado correctamente" +
                     (envio != null ? " con envio asociado." : "."));
-
         } catch (Exception e) {
             display.mostrarMensaje("Error: " + e.getMessage());
         }
     }
-
 
     // ============================================================
     // 4) LISTAR PEDIDOS
@@ -154,14 +236,11 @@ public class MenuHandler {
         }
     }
 
-
     // ============================================================
     // 5) BUSCAR PEDIDO POR ID
     // ============================================================
     public void buscarPedidoPorId() {
-        Long id = display.leerLong("ID: ");
-        if (id == null) return;
-
+        Long id = leerLongObligatorio("ID: ");
         try {
             Pedido p = pedidoService.getById(id);
             display.mostrarMensaje(p == null ? "No encontrado." : p.toString());
@@ -170,12 +249,11 @@ public class MenuHandler {
         }
     }
 
-
     // ============================================================
     // 6) BUSCAR PEDIDO POR NÚMERO
     // ============================================================
     public void buscarPedidoPorNumero() {
-        String numero = display.leerString("Numero: ");
+        String numero = leerStringObligatorio("Numero: ");
         try {
             Pedido p = pedidoService.buscarPorNumero(numero);
             display.mostrarMensaje(p == null ? "No encontrado." : p.toString());
@@ -184,14 +262,12 @@ public class MenuHandler {
         }
     }
 
-
     // ============================================================
     // 7) ACTUALIZAR PEDIDO
     // ============================================================
     public void actualizarPedido() {
 
-        Long id = display.leerLong("ID del pedido: ");
-        if (id == null) return;
+        Long id = leerLongObligatorio("ID del pedido: ");
 
         Pedido p;
         try {
@@ -206,17 +282,20 @@ public class MenuHandler {
             return;
         }
 
-        String nuevoNumero = display.leerString("Nuevo numero: ");
+        String nuevoNumero = leerStringOpcional("Nuevo numero (enter para omitir): ");
         if (!nuevoNumero.isEmpty()) p.setNumero(nuevoNumero);
 
-        String nuevoCliente = display.leerString("Nuevo cliente: ");
+        String nuevoCliente = leerStringOpcional("Nuevo cliente (enter para omitir): ");
         if (!nuevoCliente.isEmpty()) p.setClienteNombre(nuevoCliente);
 
-        Double nuevoTotal = display.leerDouble("Nuevo total: ");
+        Double nuevoTotal = leerDoubleOpcional("Nuevo total (enter para omitir): ");
         if (nuevoTotal != null) p.setTotal(nuevoTotal);
 
-        String nuevoEstado = display.leerString("Nuevo estado (NUEVO, PROCESADO, ENTREGADO): ");
-        if (!nuevoEstado.isEmpty()) p.setEstado(EstadoPedido.valueOf(nuevoEstado));
+        EstadoPedido nuevoEstado = seleccionarEnumOpcional(
+                EstadoPedido.class,
+                "Seleccione nuevo estado"
+        );
+        if (nuevoEstado != null) p.setEstado(nuevoEstado);
 
         try {
             pedidoService.actualizar(p);
@@ -226,14 +305,12 @@ public class MenuHandler {
         }
     }
 
-
     // ============================================================
     // 8) ACTUALIZAR ENVÍO
     // ============================================================
     public void actualizarEnvio() {
 
-        Long id = display.leerLong("ID del envio: ");
-        if (id == null) return;
+        Long id = leerLongObligatorio("ID del envio: ");
 
         Envio e;
         try {
@@ -248,31 +325,32 @@ public class MenuHandler {
             return;
         }
 
-        String tr = display.leerString("Tracking: ");
+        String tr = leerStringOpcional("Tracking (enter para omitir): ");
         if (!tr.isEmpty()) e.setTracking(tr);
 
-        Double costo = display.leerDouble("Nuevo costo: ");
+        Double costo = leerDoubleOpcional("Nuevo costo (enter para omitir): ");
         if (costo != null) e.setCosto(costo);
 
-        String est = display.leerString("Nuevo estado (EN_PREPARACION, EN_CAMINO, ENTREGADO): ");
-        if (!est.isEmpty()) e.setEstado(EstadoEnvio.valueOf(est));
+        EstadoEnvio nuevoEstado = seleccionarEnumOpcional(
+                EstadoEnvio.class,
+                "Seleccione nuevo estado"
+        );
+        if (nuevoEstado != null) e.setEstado(nuevoEstado);
 
         try {
             envioService.actualizar(e);
             display.mostrarMensaje("Envio actualizado.");
         } catch (Exception ex) {
-            display.mostrarMensaje(ex.getMessage());
+            display.mostrarMensaje("Error: " + ex.getMessage());
         }
     }
-
 
     // ============================================================
     // 9) ELIMINAR PEDIDO
     // ============================================================
     public void eliminarPedido() {
 
-        Long id = display.leerLong("ID del pedido: ");
-        if (id == null) return;
+        Long id = leerLongObligatorio("ID del pedido: ");
 
         if (!display.confirmar("¿Esta seguro?")) return;
 
@@ -284,7 +362,6 @@ public class MenuHandler {
         }
     }
 
-
     // ============================================================
     // 10) LISTAR ENVÍOS
     // ============================================================
@@ -292,7 +369,7 @@ public class MenuHandler {
         try {
             List<Envio> lista = envioService.getAll();
             if (lista == null || lista.isEmpty()) {
-                display.mostrarMensaje("No hay envíos.");
+                display.mostrarMensaje("No hay envios.");
                 return;
             }
             lista.forEach(System.out::println);
@@ -301,21 +378,17 @@ public class MenuHandler {
         }
     }
 
-
     // ============================================================
-    // MÉTODO AUXILIAR PARA ARMAR ENVÍOS
+    // ARMAR ENVÍO COMPLETO CON VALIDACIONES NUMÉRICAS
     // ============================================================
     private Envio leerEnvio() {
 
-        String tracking = display.leerString("Tracking: ");
-        EmpresaEnvio empresa = EmpresaEnvio.valueOf(display.leerString("Empresa: ").toUpperCase());
-        TipoEnvio tipo = TipoEnvio.valueOf(display.leerString("Tipo: ").toUpperCase());
-        Double costo = display.leerDouble("Costo: ");
-        LocalDate fd = display.leerFecha("Fecha despacho: ");
-        LocalDate fe = display.leerFecha("Fecha estimada: ");
-
-        if (costo == null || fd == null || fe == null)
-            return null;
+        String tracking = leerStringObligatorio("Tracking: ");
+        EmpresaEnvio empresa = seleccionarEnum(EmpresaEnvio.class, "Seleccione empresa de envío:");
+        TipoEnvio tipo = seleccionarEnum(TipoEnvio.class, "Seleccione tipo de envío:");
+        Double costo = leerDoublePositivo("Costo: ");
+        LocalDate fd = leerFechaObligatoria("Fecha despacho: ");
+        LocalDate fe = leerFechaObligatoria("Fecha estimada: ");
 
         return new Envio(null, false, tracking, empresa, tipo, costo, fd, fe, EstadoEnvio.EN_PREPARACION);
     }
