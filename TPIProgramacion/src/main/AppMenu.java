@@ -37,26 +37,25 @@ public class AppMenu {
     public void run() {
         boolean salir = false;
 
-        while (!salir) {
-            display.mostrarMenuPrincipal();
-            String opcion = display.leerOpcion();
+while (!salir) {
+    display.mostrarMenuPrincipal();
+    String opcion = display.leerOpcion();
 
-            switch (opcion) {
-                case "1": handler.crearPedidoSimple(); break;
-                case "2": handler.crearEnvioParaPedido(); break;
-                case "3": handler.crearPedidoConEnvio(); break;
-                case "4": handler.listarPedidos(); break;
-                case "5": handler.buscarPedidoPorId(); break;
-                case "6": handler.buscarPedidoPorNumero(); break;
-                case "7": handler.actualizarPedido(); break;
-                case "8": handler.actualizarEnvio(); break;
-                case "9": handler.eliminarPedido(); break;
-                case "10": handler.listarEnvios(); break;
-                case "0": salir = true; break;
-                default:
-                    display.mostrarMensaje("Opción invalida.");
-            }
-        }
+    switch (opcion) {
+        case "1"  -> handler.crearPedidoSimple();
+        case "2"  -> handler.crearEnvioParaPedido();
+        case "3"  -> handler.crearPedidoConEnvio();
+        case "4"  -> handler.listarPedidos();
+        case "5"  -> handler.buscarPedidoPorId();
+        case "6"  -> handler.buscarPedidoPorNumero();
+        case "7"  -> handler.actualizarPedido();
+        case "8"  -> handler.actualizarEnvio();
+        case "9"  -> handler.eliminarPedido();
+        case "10" -> handler.listarEnvios();
+        case "0"  -> salir = true;
+        default   -> display.mostrarMensaje("Opción inválida.");
+    }
+}
 
         display.mostrarMensaje("Hasta luego.");
         display.cerrar();
